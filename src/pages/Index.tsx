@@ -9,18 +9,20 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 const Index = () => {
+  const heroProps = {
+    title: "Papua New Guinea Tax System",
+    subtitle: "Simplify your tax management with our comprehensive tax calculation and compliance system",
+    ctaText: "Get Started",
+    ctaLink: "/signup",
+    secondaryCtaText: "Try Tax Calculator",
+    secondaryCtaLink: "/tax-calculator",
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <main className="flex-1">
-        <Hero 
-          title="Papua New Guinea Tax System" 
-          subtitle="Simplify your tax management with our comprehensive tax calculation and compliance system"
-          ctaText="Get Started"
-          ctaLink="/signup"
-          secondaryCtaText="Try Tax Calculator"
-          secondaryCtaLink="/tax-calculator"
-        />
+        <Hero {...heroProps} />
         <Features />
       </main>
       <Footer />
