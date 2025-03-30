@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { 
   calculateTax, 
@@ -11,12 +10,14 @@ import {
 } from '@/services';
 import AuditTrailService from '@/services/AuditTrailService';
 
+type ActionType = Parameters<typeof AuditTrailService.prototype.logAction>[1];
+
 interface TaxServicesHookResult {
   calculateTaxes: (input: TaxInput) => TaxResult;
   validateData: (data: any) => { valid: boolean; validationResults: any[] };
   checkCompliance: (data: any, businessType: string) => any;
   generateReport: (data: any, businessType: string) => any;
-  logAction: (userId: string, action: string, details: any) => void;
+  logAction: (userId: string, action: ActionType, details: any) => void;
   results: TaxResult | null;
   isValid: boolean;
   validationResults: any[];
@@ -85,10 +86,10 @@ export const useTaxServices = (userId: string = 'guest'): TaxServicesHookResult 
     return report;
   };
   
-  const logAction = (userId: string, action: string, details: any) => {
+  const logAction = (userId: string, action: ActionType, details: any) => {
     auditService.logAction(
       userId,
-      action as any,
+      action,
       details
     );
   };
