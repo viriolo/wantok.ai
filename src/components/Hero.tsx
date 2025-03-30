@@ -5,7 +5,23 @@ import { BlurCard } from '@/components/ui/blur-card';
 import { useScrollAnimation } from '@/lib/animations';
 import { Shield, FileText, CheckCircle } from 'lucide-react';
 
-const Hero = () => {
+interface HeroProps {
+  title: string;
+  subtitle: string;
+  ctaText: string;
+  ctaLink: string;
+  secondaryCtaText: string;
+  secondaryCtaLink: string;
+}
+
+const Hero = ({
+  title = "Simplified Tax Filing for Papua New Guinea Businesses",
+  subtitle = "Wantok.ai leverages advanced AI to streamline your tax preparation process, ensuring compliance with PNG tax regulations while saving you time and resources.",
+  ctaText = "Get Started Free",
+  ctaLink = "/signup",
+  secondaryCtaText = "Explore Features",
+  secondaryCtaLink = "#features"
+}: HeroProps) => {
   const titleAnimation = useScrollAnimation({
     initialClass: 'opacity-0 translate-y-4',
     animateClass: 'opacity-100 translate-y-0 transition-all duration-700 ease-out',
@@ -38,25 +54,24 @@ const Hero = () => {
             ref={titleAnimation.ref}
             className={`text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-balance ${titleAnimation.className}`}
           >
-            Simplified Tax Filing for <span className="text-png-red">Papua New Guinea</span> Businesses
+            {title}
           </h1>
           <p
             ref={subtitleAnimation.ref} 
             className={`text-foreground/80 text-lg md:text-xl max-w-2xl mx-auto mb-8 ${subtitleAnimation.className}`}
           >
-            Wantok.ai leverages advanced AI to streamline your tax preparation process, 
-            ensuring compliance with PNG tax regulations while saving you time and resources.
+            {subtitle}
           </p>
           
           <div className={`flex flex-col sm:flex-row justify-center gap-4 mb-12 ${subtitleAnimation.className}`}>
-            <Link to="/signup">
+            <Link to={ctaLink}>
               <Button size="lg" className="bg-png-red hover:bg-png-red/90 text-white shadow-md">
-                Get Started Free
+                {ctaText}
               </Button>
             </Link>
-            <Link to="#features">
+            <Link to={secondaryCtaLink}>
               <Button size="lg" variant="outline" className="shadow-sm">
-                Explore Features
+                {secondaryCtaText}
               </Button>
             </Link>
           </div>
