@@ -6,9 +6,11 @@ import {
   validateTaxData, 
   isDataValid,
   checkBusinessCompliance,
-  generateComplianceReport
+  generateComplianceReport,
+  DocumentProcessingService,
 } from '@/services';
 import AuditTrailService from '@/services/AuditTrailService';
+import { ProcessedDocument } from '@/services/DocumentProcessingService';
 
 type ActionType = Parameters<typeof AuditTrailService.prototype.logAction>[1];
 
@@ -18,10 +20,13 @@ interface TaxServicesHookResult {
   checkCompliance: (data: any, businessType: string) => any;
   generateReport: (data: any, businessType: string) => any;
   logAction: (userId: string, action: ActionType, details: any) => void;
+  processDocuments: (files: File[]) => Promise<ProcessedDocument[]>;
+  generateTaxFromDocuments: (documents: ProcessedDocument[]) => TaxResult | null;
   results: TaxResult | null;
   isValid: boolean;
   validationResults: any[];
   complianceResults: any;
+  processedDocuments: ProcessedDocument[];
 }
 
 export const useTaxServices = (userId: string = 'guest'): TaxServicesHookResult => {
@@ -29,8 +34,10 @@ export const useTaxServices = (userId: string = 'guest'): TaxServicesHookResult 
   const [isValid, setIsValid] = useState<boolean>(true);
   const [validationResults, setValidationResults] = useState<any[]>([]);
   const [complianceResults, setComplianceResults] = useState<any>(null);
+  const [processedDocuments, setProcessedDocuments] = useState<ProcessedDocument[]>([]);
   
   const auditService = AuditTrailService.getInstance();
+  const docProcessingService = DocumentProcessingService.getInstance();
 
   const calculateTaxes = (input: TaxInput) => {
     const taxResults = calculateTax(input);
@@ -94,15 +101,48 @@ export const useTaxServices = (userId: string = 'guest'): TaxServicesHookResult 
     );
   };
   
+  const processDocuments = async (files: File[]) => {
+    const processed = await docProcessingService.processMultipleDocuments(files);
+    
+    setProcessedDocuments(processed);
+    
+    auditService.logAction(
+      userId,
+      'document_processing',
+      { fileCount: files.length, processedDocuments: processed }
+    );
+    
+    return processed;
+  };
+  
+  const generateTaxFromDocuments = (documents: ProcessedDocument[]) => {
+    const taxResults = docProcessingService.generateTaxResultFromDocuments(documents);
+    
+    if (taxResults) {
+      setResults(taxResults);
+      
+      auditService.logAction(
+        userId,
+        'ai_tax_calculation',
+        { documentCount: documents.length, results: taxResults }
+      );
+    }
+    
+    return taxResults;
+  };
+  
   return {
     calculateTaxes,
     validateData,
     checkCompliance,
     generateReport,
     logAction,
+    processDocuments,
+    generateTaxFromDocuments,
     results,
     isValid,
     validationResults,
-    complianceResults
+    complianceResults,
+    processedDocuments
   };
 };
