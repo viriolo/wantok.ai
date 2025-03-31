@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calculator, FileText, AlertTriangle, Calendar, TrendingUp, Users, Upload } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import AIInsights from "@/components/AIInsights";
 
 const Dashboard = ({ className = "", ...props }) => {
   return (
@@ -64,6 +65,17 @@ const Dashboard = ({ className = "", ...props }) => {
             </div>
             <Progress value={50} className="h-1" />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* AI Insights Card (NEW) */}
+      <Card className="md:col-span-2">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">AI Insights</CardTitle>
+          <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <AIInsights />
         </CardContent>
       </Card>
 

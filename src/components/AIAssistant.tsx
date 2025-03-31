@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { MessageSquare, Send, User, Bot, ChevronDown, ChevronUp, Lightbulb } from "lucide-react";
+import AIInsightsService from "@/services/AIInsightsService";
+import AuditTrailService from "@/services/AuditTrailService";
 
 interface Message {
   id: string;
@@ -27,6 +29,9 @@ const AIAssistant = () => {
   const [showSuggestions, setShowSuggestions] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  
+  const aiInsightsService = AIInsightsService.getInstance();
+  const auditService = AuditTrailService.getInstance();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -55,20 +60,44 @@ const AIAssistant = () => {
     setIsTyping(true);
     
     try {
+      // Log the AI interaction
+      const userId = "guest"; // In a real app, this would be the logged-in user's ID
+      auditService.logAction(
+        userId,
+        detectMessageType(messageContent),
+        { query: messageContent }
+      );
+      
       // Simulate AI response
       await new Promise((resolve) => setTimeout(resolve, 1500));
       
       // Generate response based on user input
       let response = "";
       
-      if (messageContent.toLowerCase().includes("deadline")) {
+      // Check if query is related to advanced tax planning features
+      if (messageContent.toLowerCase().includes("strategic") || 
+          messageContent.toLowerCase().includes("planning") || 
+          messageContent.toLowerCase().includes("optimization")) {
+        response = getStrategicPlanningResponse(messageContent);
+      } else if (messageContent.toLowerCase().includes("international") || 
+                 messageContent.toLowerCase().includes("foreign") || 
+                 messageContent.toLowerCase().includes("transfer pricing")) {
+        response = getInternationalTransactionResponse(messageContent);
+      } else if (messageContent.toLowerCase().includes("business decision") || 
+                 messageContent.toLowerCase().includes("restructure") || 
+                 messageContent.toLowerCase().includes("acquisition")) {
+        response = getBusinessDecisionResponse(messageContent);
+      } else if (messageContent.toLowerCase().includes("audit") || 
+                 messageContent.toLowerCase().includes("representation")) {
+        response = getAuditRepresentationResponse(messageContent);
+      } else if (messageContent.toLowerCase().includes("deadline")) {
         response = "The tax filing deadline for Papua New Guinea businesses varies by tax type. For GST, it's typically due by the 21st day of the month following the end of your taxable period. For annual income tax returns, the deadline is February 28th for the previous tax year.";
       } else if (messageContent.toLowerCase().includes("deduction") || messageContent.toLowerCase().includes("expense")) {
         response = "In Papua New Guinea, businesses can generally deduct legitimate business expenses including: employee wages, rent, utilities, marketing costs, and depreciation of assets. Remember to keep proper documentation for all claimed deductions.";
       } else if (messageContent.toLowerCase().includes("penalty") || messageContent.toLowerCase().includes("late")) {
         response = "Late filing penalties in PNG can be significant. For late tax returns, the Internal Revenue Commission typically imposes a penalty of 20% of the tax payable, plus an additional 20% per annum on the amount of tax unpaid.";
       } else {
-        response = "Thank you for your question. As a tax assistant for Papua New Guinea businesses, I can help with filing deadlines, deductions, GST compliance, and other tax matters specific to PNG regulations. Could you provide more details about your business type and specific tax concern?";
+        response = "Thank you for your question. As a tax assistant for Papua New Guinea businesses, I can help with filing deadlines, deductions, GST compliance, and other tax matters specific to PNG regulations. I can assist with strategic tax planning, international transactions, business decisions, and audit representation. Could you provide more details about your business type and specific tax concern?";
       }
       
       const assistantMessage: Message = {
@@ -90,10 +119,71 @@ const AIAssistant = () => {
     }
   };
 
+  // Determine what type of AI action this is for audit logging
+  const detectMessageType = (message: string): "ai_strategic_planning" | "ai_international_transaction" | "ai_business_decision" | "ai_professional_referral" | "tax_calculation" => {
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes("strategic") || lowerMessage.includes("planning") || lowerMessage.includes("optimization")) {
+      return "ai_strategic_planning";
+    } else if (lowerMessage.includes("international") || lowerMessage.includes("foreign") || lowerMessage.includes("transfer pricing")) {
+      return "ai_international_transaction";
+    } else if (lowerMessage.includes("business decision") || lowerMessage.includes("restructure") || lowerMessage.includes("acquisition")) {
+      return "ai_business_decision";
+    } else if (lowerMessage.includes("professional") || lowerMessage.includes("consultant") || lowerMessage.includes("expert")) {
+      return "ai_professional_referral";
+    } else {
+      return "tax_calculation";
+    }
+  };
+
+  // Generate responses for advanced tax planning features
+  const getStrategicPlanningResponse = (message: string): string => {
+    const needsProfessional = message.length > 50;
+    
+    let response = "Based on PNG tax regulations, strategic tax planning involves understanding specific deductions and credits available to your business type. ";
+    
+    if (needsProfessional) {
+      response += "Your question involves complex strategic planning that may benefit from professional consultation. I've added an insight to your dashboard that highlights relevant PNG tax regulations and recommends next steps. Key considerations include timing of income recognition, strategic expense allocation, and industry-specific incentives available under PNG tax law.";
+    } else {
+      response += "For basic strategic planning, ensure you're taking advantage of all allowable deductions and consider the timing of income recognition and expenses. PNG offers specific incentives for certain industries and business activities.";
+    }
+    
+    return response;
+  };
+  
+  const getInternationalTransactionResponse = (message: string): string => {
+    // International transactions almost always require professional help
+    const response = "International transactions under PNG tax law have significant compliance requirements. Your situation involves cross-border transactions that trigger specific reporting and documentation requirements. I've flagged this in your dashboard as requiring professional consultation due to the complexity of PNG's transfer pricing rules, foreign exchange control regulations, and potential withholding tax obligations. Would you like me to explain any specific aspect of PNG's international tax requirements?";
+    
+    return response;
+  };
+  
+  const getBusinessDecisionResponse = (message: string): string => {
+    const needsProfessional = message.toLowerCase().includes("acquisition") || message.toLowerCase().includes("merger") || message.length > 60;
+    
+    let response = "Business decisions can have significant tax implications under PNG tax law. ";
+    
+    if (needsProfessional) {
+      response += "The business decision you're considering has complex tax implications specific to PNG regulations. I've added an insight to your dashboard recommending professional consultation. Key considerations include potential asset transfer taxes, restructuring implications, and industry-specific regulations that may apply to your situation.";
+    } else {
+      response += "When making business decisions, consider the tax implications of different entity structures, potential industry-specific incentives, and timing of transactions. PNG tax law has specific provisions that may impact your decision.";
+    }
+    
+    return response;
+  };
+  
+  const getAuditRepresentationResponse = (message: string): string => {
+    // Audit representation almost always requires professional help
+    const response = "Regarding audit representation, PNG's tax authority (IRC) has specific procedures and documentation requirements. Given the complexity of tax audits, I've flagged this as requiring professional consultation in your dashboard. Key preparations include organizing supporting documentation, reviewing potential areas of scrutiny based on your business type, and understanding IRC audit procedures. Would you like specific information about audit preparation under PNG tax regulations?";
+    
+    return response;
+  };
+
   const suggestions = [
-    "When is the tax filing deadline for PNG businesses?",
-    "What business expenses can I deduct?",
-    "What are the penalties for late filing?",
+    "What strategic tax planning options do I have for my business?",
+    "How do I handle international transactions under PNG tax law?",
+    "What tax implications should I consider for business restructuring?",
+    "How should I prepare for a potential tax audit?",
   ];
 
   return (
