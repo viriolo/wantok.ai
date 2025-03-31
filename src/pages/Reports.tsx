@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { FileText, Calendar, Download, Printer } from 'lucide-react';
+import { FileText, Calendar, Download, Printer, Eye, Plus } from 'lucide-react';
 import { 
   Card, 
   CardContent, 
@@ -22,67 +22,26 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-
-// Sample report data - in a real application, this would come from an API or database
-const SAMPLE_REPORTS = [
-  { 
-    id: '1',
-    title: 'Annual Tax Summary',
-    description: 'Comprehensive tax summary for the fiscal year 2023',
-    date: '2023-12-31',
-    type: 'annual',
-    status: 'finalized',
-    downloadUrl: '#',
-    size: '1.2 MB'
-  },
-  { 
-    id: '2',
-    title: 'Q4 GST Statement',
-    description: 'GST statement for October-December 2023',
-    date: '2023-12-15',
-    type: 'quarterly',
-    status: 'finalized',
-    downloadUrl: '#',
-    size: '852 KB'
-  },
-  { 
-    id: '3',
-    title: 'Monthly Business Activity Statement',
-    description: 'November 2023 business activity report',
-    date: '2023-11-30',
-    type: 'monthly',
-    status: 'finalized',
-    downloadUrl: '#',
-    size: '645 KB'
-  },
-  { 
-    id: '4',
-    title: 'Tax Deductions Schedule',
-    description: 'Detailed breakdown of all tax deductions claimed for 2023',
-    date: '2023-12-10',
-    type: 'annual',
-    status: 'finalized',
-    downloadUrl: '#',
-    size: '920 KB'
-  },
-  { 
-    id: '5',
-    title: 'Q3 GST Statement',
-    description: 'GST statement for July-September 2023',
-    date: '2023-09-30',
-    type: 'quarterly',
-    status: 'finalized',
-    downloadUrl: '#',
-    size: '814 KB'
-  },
-];
+import { useQueryClient } from '@tanstack/react-query';
+import { useTaxServices } from '@/hooks/useTaxServices';
+import ReportService, { Report } from '@/services/ReportService';
+import CustomReportRequestDialog from '@/components/CustomReportRequestDialog';
+import ReportDetailDialog from '@/components/ReportDetailDialog';
 
 const Reports = () => {
+  const reportService = ReportService.getInstance();
+  const [reports, setReports] = useState<Report[]>(reportService.getReports());
   const [reportFilter, setReportFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  
+  const queryClient = useQueryClient();
+  const { results: latestTaxResults } = useTaxServices();
   
   // Filter reports based on selected filters
-  const filteredReports = SAMPLE_REPORTS.filter(report => {
+  const filteredReports = reports.filter(report => {
     // Filter by report type
     const matchesType = reportFilter === 'all' || report.type === reportFilter;
     
@@ -108,19 +67,58 @@ const Reports = () => {
     return matchesType && matchesDate;
   });
 
-  const handleDownload = (reportId: string, reportTitle: string) => {
+  const handleDownload = (report: Report) => {
     // In a real application, this would initiate a download
     toast({
       title: "Download Started",
-      description: `${reportTitle} is being downloaded.`,
+      description: `${report.title} is being downloaded.`,
     });
   };
 
-  const handlePrint = (reportId: string, reportTitle: string) => {
+  const handlePrint = (report: Report) => {
     // In a real application, this would open a print dialog
     toast({
       title: "Preparing for Print",
-      description: `${reportTitle} is being prepared for printing.`,
+      description: `${report.title} is being prepared for printing.`,
+    });
+  };
+
+  const handleViewReport = (report: Report) => {
+    setSelectedReport(report);
+    setIsDetailDialogOpen(true);
+  };
+
+  const handleGenerateReport = (type: Report['type']) => {
+    if (!latestTaxResults) {
+      toast({
+        title: "No Tax Data Available",
+        description: "Please perform a tax calculation first before generating a report.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const newReport = reportService.generateReportFromTaxResults(latestTaxResults, type);
+    setReports(current => [newReport, ...current]);
+    
+    toast({
+      title: "Report Generated",
+      description: `Your ${type} report has been created successfully.`,
+    });
+  };
+
+  const handleCustomReportRequest = (data: {
+    title: string;
+    description: string;
+    type: Report['type'];
+    additionalInfo?: string;
+  }) => {
+    const newReport = reportService.requestCustomReport(data);
+    setReports(current => [newReport, ...current]);
+    
+    toast({
+      title: "Custom Report Requested",
+      description: "Your custom report request has been submitted.",
     });
   };
 
@@ -135,6 +133,36 @@ const Reports = () => {
         </div>
         <FileText size={48} className="text-primary opacity-80" />
       </div>
+
+      {/* Generate Report Card */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Generate New Report</CardTitle>
+          <CardDescription>
+            Create a new tax report based on your latest calculations
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={() => handleGenerateReport('annual')} variant="outline">
+              <Plus className="h-4 w-4 mr-2" />
+              Annual Report
+            </Button>
+            <Button onClick={() => handleGenerateReport('quarterly')} variant="outline">
+              <Plus className="h-4 w-4 mr-2" />
+              Quarterly Report
+            </Button>
+            <Button onClick={() => handleGenerateReport('monthly')} variant="outline">
+              <Plus className="h-4 w-4 mr-2" />
+              Monthly Report
+            </Button>
+            <Button onClick={() => setIsRequestDialogOpen(true)} variant="default">
+              <Plus className="h-4 w-4 mr-2" />
+              Custom Report
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <Card className="mb-8">
@@ -157,6 +185,7 @@ const Reports = () => {
                   <SelectItem value="annual">Annual Reports</SelectItem>
                   <SelectItem value="quarterly">Quarterly Statements</SelectItem>
                   <SelectItem value="monthly">Monthly Statements</SelectItem>
+                  <SelectItem value="custom">Custom Reports</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -214,26 +243,37 @@ const Reports = () => {
                       </div>
                     </TableCell>
                     <TableCell className="capitalize">{report.type}</TableCell>
-                    <TableCell>{report.size}</TableCell>
+                    <TableCell>{report.status === 'pending' ? 'Pending' : report.size}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleDownload(report.id, report.title)}
-                          className="flex items-center gap-1"
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleViewReport(report)}
+                          title="View Details"
                         >
-                          <Download className="h-4 w-4" />
-                          <span className="sr-only md:not-sr-only md:inline-block">Download</span>
+                          <Eye className="h-4 w-4" />
+                          <span className="sr-only">View</span>
                         </Button>
                         <Button 
-                          size="sm" 
+                          size="icon" 
                           variant="ghost"
-                          onClick={() => handlePrint(report.id, report.title)}
-                          className="flex items-center gap-1"
+                          onClick={() => handleDownload(report)}
+                          title="Download"
+                          disabled={report.status === 'pending'}
+                        >
+                          <Download className="h-4 w-4" />
+                          <span className="sr-only">Download</span>
+                        </Button>
+                        <Button 
+                          size="icon" 
+                          variant="ghost"
+                          onClick={() => handlePrint(report)}
+                          title="Print"
+                          disabled={report.status === 'pending'}
                         >
                           <Printer className="h-4 w-4" />
-                          <span className="sr-only md:not-sr-only md:inline-block">Print</span>
+                          <span className="sr-only">Print</span>
                         </Button>
                       </div>
                     </TableCell>
@@ -257,13 +297,33 @@ const Reports = () => {
         </CardContent>
         <CardFooter className="flex justify-between">
           <p className="text-sm text-muted-foreground">
-            Need a custom report? Contact our support team.
+            Need a custom report? Click the button to request one.
           </p>
-          <Button variant="outline" className="ml-auto">
+          <Button 
+            variant="outline" 
+            className="ml-auto"
+            onClick={() => setIsRequestDialogOpen(true)}
+          >
             Request Custom Report
           </Button>
         </CardFooter>
       </Card>
+
+      {/* Custom Report Request Dialog */}
+      <CustomReportRequestDialog
+        open={isRequestDialogOpen}
+        onOpenChange={setIsRequestDialogOpen}
+        onSubmit={handleCustomReportRequest}
+      />
+
+      {/* Report Detail Dialog */}
+      <ReportDetailDialog
+        report={selectedReport}
+        open={isDetailDialogOpen}
+        onOpenChange={setIsDetailDialogOpen}
+        onDownload={handleDownload}
+        onPrint={handlePrint}
+      />
     </div>
   );
 };
