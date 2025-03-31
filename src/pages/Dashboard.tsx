@@ -1,9 +1,11 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import DashboardComponent from "@/components/Dashboard";
 import DocumentUpload from "@/components/DocumentUpload";
 import AIAssistant from "@/components/AIAssistant";
+import TaxHistory from "@/components/TaxHistory";
+import CompanyManagement from "@/components/CompanyManagement";
 import { BlurCard } from "@/components/ui/blur-card";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,15 +20,19 @@ import {
   ChevronLeft,
   Menu,
   X,
+  User,
+  Building,
+  History,
 } from "lucide-react";
 import { useIsMobile } from '@/hooks/use-mobile';
 
-type Tab = "dashboard" | "documents" | "assistant" | "reports" | "settings";
+type Tab = "dashboard" | "documents" | "assistant" | "reports" | "settings" | "tax-history" | "companies" | "profile";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -39,6 +45,10 @@ const Dashboard = () => {
     }
   };
 
+  const handleNavigate = (path: string) => {
+    navigate(path);
+  };
+
   const getTabContent = () => {
     switch (activeTab) {
       case "dashboard":
@@ -47,16 +57,35 @@ const Dashboard = () => {
         return <DocumentUpload />;
       case "assistant":
         return <AIAssistant />;
+      case "tax-history":
+        return <TaxHistory />;
+      case "companies":
+        return <CompanyManagement />;
       case "reports":
         return (
-          <div className="flex items-center justify-center h-96 text-foreground/70">
-            Reports feature coming soon
+          <div className="flex flex-col items-center justify-center h-96 text-foreground/70">
+            <FileText className="h-16 w-16 mb-4 opacity-50" />
+            <p className="text-lg mb-4">Reports feature coming soon</p>
+            <Button onClick={() => handleNavigate('/reports')}>
+              Go to Reports Page
+            </Button>
+          </div>
+        );
+      case "profile":
+        return (
+          <div className="flex flex-col items-center justify-center h-96 text-foreground/70">
+            <User className="h-16 w-16 mb-4 opacity-50" />
+            <p className="text-lg mb-4">View and edit your profile</p>
+            <Button onClick={() => handleNavigate('/profile')}>
+              Go to Profile Page
+            </Button>
           </div>
         );
       case "settings":
         return (
-          <div className="flex items-center justify-center h-96 text-foreground/70">
-            Settings feature coming soon
+          <div className="flex flex-col items-center justify-center h-96 text-foreground/70">
+            <Settings className="h-16 w-16 mb-4 opacity-50" />
+            <p className="text-lg">Settings feature coming soon</p>
           </div>
         );
       default:
@@ -83,7 +112,7 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="text-foreground/70">
+            <Button variant="ghost" size="icon" className="text-foreground/70" onClick={() => handleNavigate('/help')}>
               <HelpCircle className="h-5 w-5" />
             </Button>
             <Link to="/">
@@ -154,10 +183,28 @@ const Dashboard = () => {
                 onClick={() => handleTabChange("assistant")}
               />
               <NavItem
+                icon={<History className="h-5 w-5" />}
+                label="Tax History"
+                active={activeTab === "tax-history"}
+                onClick={() => handleTabChange("tax-history")}
+              />
+              <NavItem
                 icon={<BarChart className="h-5 w-5" />}
                 label="Reports"
                 active={activeTab === "reports"}
                 onClick={() => handleTabChange("reports")}
+              />
+              <NavItem
+                icon={<Building className="h-5 w-5" />}
+                label="Companies"
+                active={activeTab === "companies"}
+                onClick={() => handleTabChange("companies")}
+              />
+              <NavItem
+                icon={<User className="h-5 w-5" />}
+                label="My Profile"
+                active={activeTab === "profile"}
+                onClick={() => handleTabChange("profile")}
               />
               <NavItem
                 icon={<Settings className="h-5 w-5" />}
@@ -185,6 +232,7 @@ const Dashboard = () => {
                   variant="ghost"
                   size="sm"
                   className="text-foreground/70 text-xs"
+                  onClick={() => handleNavigate('/help')}
                 >
                   <HelpCircle className="h-4 w-4 mr-1" />
                   Help
@@ -223,6 +271,9 @@ const Dashboard = () => {
                     {activeTab === "documents" && "Document Upload"}
                     {activeTab === "assistant" && "AI Tax Assistant"}
                     {activeTab === "reports" && "Reports"}
+                    {activeTab === "tax-history" && "Tax Calculation History"}
+                    {activeTab === "companies" && "Company Management"}
+                    {activeTab === "profile" && "My Profile"}
                     {activeTab === "settings" && "Settings"}
                   </h1>
                   <p className="text-foreground/70">
@@ -240,6 +291,7 @@ const Dashboard = () => {
                     variant="outline"
                     size="sm"
                     className="text-foreground/70"
+                    onClick={() => handleNavigate('/help')}
                   >
                     <HelpCircle className="h-4 w-4 mr-2" />
                     Help
@@ -266,6 +318,9 @@ const Dashboard = () => {
                     {activeTab === "documents" && "Document Upload"}
                     {activeTab === "assistant" && "AI Tax Assistant"}
                     {activeTab === "reports" && "Reports"}
+                    {activeTab === "tax-history" && "Tax Calculation History"}
+                    {activeTab === "companies" && "Company Management"}
+                    {activeTab === "profile" && "My Profile"}
                     {activeTab === "settings" && "Settings"}
                   </h1>
                   <Link to="/">
