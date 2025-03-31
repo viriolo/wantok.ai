@@ -1,3 +1,4 @@
+
 /**
  * Audit Trail Service for Papua New Guinea Tax System
  * Creates a comprehensive audit trail system
@@ -14,7 +15,9 @@ type ActionType =
   | 'payment'
   | 'data_validation'
   | 'compliance_check'
-  | 'report_generation';
+  | 'report_generation'
+  | 'document_processing'
+  | 'ai_tax_calculation';
 
 interface AuditEntry {
   timestamp: Date;
