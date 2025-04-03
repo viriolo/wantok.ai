@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, CheckCircle, Clock, ExternalLink, MessageSquare } from "lucide-react";
-import { AIInsightsService, AIInsight } from "@/services/AIInsightsService";
+import AIInsightsService, { AIInsight } from "@/services/AIInsightsService";
 
 const AIInsights = () => {
   const aiInsightsService = AIInsightsService.getInstance();
@@ -23,7 +23,7 @@ const AIInsights = () => {
       case 'high':
         return <Badge variant="destructive" className="ml-2">High Complexity</Badge>;
       case 'medium':
-        return <Badge variant="warning" className="ml-2 bg-yellow-500">Medium Complexity</Badge>;
+        return <Badge className="ml-2 bg-yellow-500">Medium Complexity</Badge>;
       default:
         return <Badge variant="outline" className="ml-2">Low Complexity</Badge>;
     }
