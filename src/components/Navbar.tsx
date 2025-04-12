@@ -25,6 +25,12 @@ const Navbar = () => {
             >
               Tax Calculator
             </Link>
+            <Link
+              to="/income-tax-calculator"
+              className="flex items-center text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              Income Tax Calculator
+            </Link>
           </nav>
         </div>
 

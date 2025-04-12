@@ -29,7 +29,7 @@ const App = () => (
           <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/tax-calculator" element={<TaxCalculator />} />
-          <Route path="/png-tax-calculator" element={<PNGIncomeTaxCalculator />} />
+          <Route path="/income-tax-calculator" element={<PNGIncomeTaxCalculator />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/help" element={<Help />} />

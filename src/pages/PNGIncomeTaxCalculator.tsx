@@ -103,7 +103,7 @@ const PNGIncomeTaxCalculator = () => {
       <div className="flex items-center justify-between mb-8">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">Papua New Guinea Income Tax Calculator 2023</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Income Tax Calculator 2023</h1>
             <Flag className="h-6 w-6 text-[#ce1126]" />
           </div>
           <p className="text-muted-foreground mt-2">
