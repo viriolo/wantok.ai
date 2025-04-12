@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import Hero from "@/components/Hero";
 import Features from "@/components/Features";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -20,7 +19,6 @@ const Index = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar />
       <main className="flex-1">
         <Hero {...heroProps} />
         <Features />
