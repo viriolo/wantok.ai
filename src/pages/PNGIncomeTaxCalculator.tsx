@@ -47,7 +47,8 @@ type FormValues = z.infer<typeof formSchema>;
 
 const PNGIncomeTaxCalculator = () => {
   const [calculationResult, setCalculationResult] = useState<PNGTaxResult | null>(null);
-  const [showDetails, setShowDetails] = useState(false);
+  // Changed to default true to show details by default
+  const [showDetails, setShowDetails] = useState(true);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -102,7 +103,7 @@ const PNGIncomeTaxCalculator = () => {
 
       const result = calculatePNGIncomeTax(taxInput);
       setCalculationResult(result);
-      setShowDetails(true);
+      setShowDetails(true); // Always show details when calculation is performed
 
       toast({
         title: "Tax Calculation Complete",
@@ -138,6 +139,21 @@ const PNGIncomeTaxCalculator = () => {
     append({ name: '', amount: 0 });
   };
 
+  // Function to determine tax bracket description
+  const getTaxBracketDescription = (fortnightlyIncome: number): string => {
+    if (fortnightlyIncome <= 769.23) {
+      return "K0 - K769.23";
+    } else if (fortnightlyIncome > 769.23 && fortnightlyIncome < 1269.23) {
+      return "K769.23 - K1,269.23";
+    } else if (fortnightlyIncome < 2692.31) {
+      return "K1,269.23 - K2,692.31";
+    } else if (fortnightlyIncome < 9615.38) {
+      return "K2,692.31 - K9,615.38";
+    } else {
+      return "Above K9,615.38";
+    }
+  };
+
   return (
     <div className="container mx-auto py-8 px-4 print:py-2">
       <div className="flex items-center justify-between mb-8">
@@ -153,6 +169,22 @@ const PNGIncomeTaxCalculator = () => {
         </div>
         <Calculator size={48} className="text-primary opacity-80 hidden md:block" />
       </div>
+
+      {/* Important notes section - moved to top and always visible */}
+      <Card className="mb-8 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-2">
+            <AlertTriangle size={18} className="text-amber-500 mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-amber-800 dark:text-amber-300">
+              <p className="font-medium mb-1">Important Notice</p>
+              <p>
+                This calculator is for estimation purposes only and is based on the Income Tax (Salary and Wages Tax)(Rates)(2023 Budget)(Amendment) Act 2022. 
+                For official tax advice, please consult a tax professional or contact the Internal Revenue Commission.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-8 md:grid-cols-12">
         <Card className="md:col-span-7">
@@ -255,10 +287,16 @@ const PNGIncomeTaxCalculator = () => {
                         </FormDescription>
                       </div>
                       <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            {field.value ? "Yes" : "No"}
+                          </span>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-blue-600"
+                          />
+                        </div>
                       </FormControl>
                     </FormItem>
                   )}
@@ -288,10 +326,16 @@ const PNGIncomeTaxCalculator = () => {
                         </FormDescription>
                       </div>
                       <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            {field.value ? "Yes" : "No"}
+                          </span>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-blue-600"
+                          />
+                        </div>
                       </FormControl>
                     </FormItem>
                   )}
@@ -311,7 +355,7 @@ const PNGIncomeTaxCalculator = () => {
                                 <HelpCircle className="h-4 w-4 ml-2 text-muted-foreground" />
                               </TooltipTrigger>
                               <TooltipContent className="max-w-80">
-                                <p>Dependants reduce your tax liability. 1 dependant: 10% reduction (max K17.31), 2 dependants: 15% reduction (max K28.85), 3+ dependants: 35% reduction (max K40.38).</p>
+                                <p>Dependants reduce your tax liability. 1 dependant: 10% reduction (max K17.31), 2 dependants: 15% reduction (max K28.85), 3+ dependants: 35% reduction (max K40.38). Only applicable if you are a resident and have lodged a tax declaration.</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -348,14 +392,14 @@ const PNGIncomeTaxCalculator = () => {
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
                         <FormLabel className="text-base">
-                          Salary Sacrifice (60%)
+                          Salary Sacrifice (40%)
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <HelpCircle className="h-4 w-4 ml-2 text-muted-foreground inline-block" />
                               </TooltipTrigger>
                               <TooltipContent className="max-w-80">
-                                <p>If enabled, 60% of your salary will be deducted as salary sacrifice.</p>
+                                <p>If enabled, 40% of your salary will be deducted as salary sacrifice.</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -365,10 +409,16 @@ const PNGIncomeTaxCalculator = () => {
                         </FormDescription>
                       </div>
                       <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            {field.value ? "Yes" : "No"}
+                          </span>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-blue-600"
+                          />
+                        </div>
                       </FormControl>
                     </FormItem>
                   )}
@@ -398,10 +448,16 @@ const PNGIncomeTaxCalculator = () => {
                         </FormDescription>
                       </div>
                       <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            {field.value ? "Yes" : "No"}
+                          </span>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-blue-600"
+                          />
+                        </div>
                       </FormControl>
                     </FormItem>
                   )}
@@ -431,10 +487,16 @@ const PNGIncomeTaxCalculator = () => {
                         </FormDescription>
                       </div>
                       <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            {field.value ? "Yes" : "No"}
+                          </span>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-blue-600"
+                          />
+                        </div>
                       </FormControl>
                     </FormItem>
                   )}
@@ -579,12 +641,20 @@ const PNGIncomeTaxCalculator = () => {
                     </div>
                   </div>
 
+                  {/* Tax Bracket information - Added as requested */}
+                  <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
+                    <h3 className="font-medium mb-2">Tax Bracket</h3>
+                    <p className="text-sm">
+                      {getTaxBracketDescription(calculationResult.grossIncome.fortnightly)}
+                    </p>
+                  </div>
+
                   <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
                     <h3 className="font-medium mb-3">Deductions</h3>
                     <div className="space-y-2">
                       {calculationResult.deductions.salarySacrifice > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span>Salary Sacrifice (60%):</span>
+                          <span>Salary Sacrifice (40%):</span>
                           <span className="font-medium">- {formatPNGCurrency(calculationResult.deductions.salarySacrifice)}</span>
                         </div>
                       )}
@@ -683,22 +753,18 @@ const PNGIncomeTaxCalculator = () => {
                           <span>Final Tax (Annual):</span>
                           <span>{formatPNGCurrency(calculationResult.taxPayable.annual)}</span>
                         </div>
+
+                        {calculationResult.taxBreakdown.dependantReduction > 0 && (
+                          <div className="pt-2 mt-2 border-t">
+                            <p className="text-[#009c3f] font-medium">
+                              Dependant Reduction: {formatPNGCurrency(calculationResult.taxBreakdown.dependantReduction)} per fortnight 
+                              ({formatPNGCurrency(calculationResult.taxBreakdown.dependantReduction * 26)} annually)
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
-                </div>
-
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 p-4 rounded-md">
-                  <div className="flex items-start gap-2">
-                    <InfoIcon size={18} className="text-amber-500 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-amber-800 dark:text-amber-300">
-                      <p className="font-medium mb-1">Important Note</p>
-                      <p className="text-xs">
-                        This calculator is for estimation purposes only and is based on the Income Tax (Salary and Wages Tax)(Rates)(2023 Budget)(Amendment) Act 2022. 
-                        Consult a tax professional for official advice.
-                      </p>
-                    </div>
-                  </div>
                 </div>
               </div>
             ) : (
@@ -750,7 +816,7 @@ const PNGIncomeTaxCalculator = () => {
                 Salary Sacrifice
               </h3>
               <p className="text-sm text-muted-foreground">
-                Salary sacrifice allows you to allocate 60% of your income toward benefits like housing, 
+                Salary sacrifice allows you to allocate 40% of your income toward benefits like housing, 
                 vehicle allowances, or retirement contributions before tax is calculated.
               </p>
             </div>
@@ -768,9 +834,34 @@ const PNGIncomeTaxCalculator = () => {
         </CardContent>
       </Card>
 
-      <div className="mt-8 text-sm text-center text-muted-foreground">
-        <p className="mb-1">For official tax advice, contact the Internal Revenue Commission</p>
-        <p>Website: <a href="https://irc.gov.pg" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">https://irc.gov.pg</a></p>
+      {/* Footer with contact information - Added as requested */}
+      <div className="mt-8 border-t pt-8">
+        <div className="grid gap-8 md:grid-cols-2">
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Contact Information</h3>
+            <p className="text-sm text-muted-foreground mb-2">For additional assistance with tax calculations:</p>
+            <p className="text-sm mb-1"><strong>Email:</strong> support@pngtax.com</p>
+            <p className="text-sm"><strong>Phone:</strong> (+675) 123-4567</p>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Official Resources</h3>
+            <p className="text-sm text-muted-foreground mb-2">For official tax information and services:</p>
+            <p className="text-sm mb-1">
+              <a href="https://irc.gov.pg" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                PNG Internal Revenue Commission
+              </a>
+            </p>
+            <p className="text-sm">
+              <a href="https://www.nasfund.com.pg" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                Nasfund
+              </a>
+            </p>
+          </div>
+        </div>
+        <div className="mt-6 text-sm text-center text-muted-foreground">
+          <p>© {new Date().getFullYear()} PNG Tax System. All calculations are based on the Income Tax (Salary and Wages Tax)(Rates)(2023 Budget)(Amendment) Act 2022.</p>
+          <p className="mt-1">This calculator is for estimation purposes only. Consult a tax professional for official advice.</p>
+        </div>
       </div>
     </div>
   );

@@ -173,8 +173,8 @@ export const calculatePNGIncomeTax = (input: PNGTaxInput): PNGTaxResult => {
   
   // Calculate deductions
   
-  // 1. Salary Sacrifice (60% if enabled)
-  const salarySacrificeAmount = input.hasSalarySacrifice ? annualIncome * 0.6 : 0;
+  // 1. Salary Sacrifice (40% if enabled) - Changed from 60% to 40%
+  const salarySacrificeAmount = input.hasSalarySacrifice ? annualIncome * 0.4 : 0;
   
   // 2. Nasfund contribution (6% if enabled)
   const nasfundAmount = input.hasNasfund ? annualIncome * 0.06 : 0;
