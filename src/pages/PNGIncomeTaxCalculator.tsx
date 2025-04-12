@@ -47,7 +47,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const PNGIncomeTaxCalculator = () => {
   const [calculationResult, setCalculationResult] = useState<PNGTaxResult | null>(null);
-  // Changed to default true to show details by default
+  // Always show details by default
   const [showDetails, setShowDetails] = useState(true);
 
   const form = useForm<FormValues>({
@@ -71,6 +71,8 @@ const PNGIncomeTaxCalculator = () => {
   });
 
   const hasOtherDeductions = form.watch('hasOtherDeductions');
+  const isResident = form.watch('isResident');
+  const hasDeclarationLodged = form.watch('hasDeclarationLodged');
   
   React.useEffect(() => {
     if (hasOtherDeductions && fields.length === 0) {
@@ -84,7 +86,7 @@ const PNGIncomeTaxCalculator = () => {
 
   const handleCalculate = (data: FormValues) => {
     try {
-      // Fix here: Ensure we're passing properly typed data to calculatePNGIncomeTax
+      // Ensure we're passing properly typed data to calculatePNGIncomeTax
       const taxInput: PNGTaxInput = {
         income: data.income,
         isFortnightly: data.isFortnightly,
@@ -95,16 +97,15 @@ const PNGIncomeTaxCalculator = () => {
         hasNasfund: data.hasNasfund,
         otherDeductions: data.hasOtherDeductions 
           ? data.otherDeductions.map(d => ({ 
-              name: d.name || "Unnamed Deduction", // Provide default name
-              amount: d.amount || 0 // Provide default amount
+              name: d.name || "Unnamed Deduction",
+              amount: d.amount || 0
             })) 
           : []
       };
 
       const result = calculatePNGIncomeTax(taxInput);
       setCalculationResult(result);
-      setShowDetails(true); // Always show details when calculation is performed
-
+      
       toast({
         title: "Tax Calculation Complete",
         description: "Your tax calculation has been processed.",
@@ -121,7 +122,6 @@ const PNGIncomeTaxCalculator = () => {
   const handleReset = () => {
     form.reset();
     setCalculationResult(null);
-    setShowDetails(false);
   };
 
   const generatePDF = () => {
@@ -137,21 +137,6 @@ const PNGIncomeTaxCalculator = () => {
 
   const addDeduction = () => {
     append({ name: '', amount: 0 });
-  };
-
-  // Function to determine tax bracket description
-  const getTaxBracketDescription = (fortnightlyIncome: number): string => {
-    if (fortnightlyIncome <= 769.23) {
-      return "K0 - K769.23";
-    } else if (fortnightlyIncome > 769.23 && fortnightlyIncome < 1269.23) {
-      return "K769.23 - K1,269.23";
-    } else if (fortnightlyIncome < 2692.31) {
-      return "K1,269.23 - K2,692.31";
-    } else if (fortnightlyIncome < 9615.38) {
-      return "K2,692.31 - K9,615.38";
-    } else {
-      return "Above K9,615.38";
-    }
   };
 
   return (
@@ -170,7 +155,7 @@ const PNGIncomeTaxCalculator = () => {
         <Calculator size={48} className="text-primary opacity-80 hidden md:block" />
       </div>
 
-      {/* Important notes section - moved to top and always visible */}
+      {/* Important notes section - always visible at the top */}
       <Card className="mb-8 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30">
         <CardContent className="pt-6">
           <div className="flex items-start gap-2">
@@ -341,7 +326,7 @@ const PNGIncomeTaxCalculator = () => {
                   )}
                 />
 
-                {form.watch('isResident') && form.watch('hasDeclarationLodged') && (
+                {isResident && hasDeclarationLodged && (
                   <FormField
                     control={form.control}
                     name="dependants"
@@ -377,7 +362,7 @@ const PNGIncomeTaxCalculator = () => {
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          Number of dependants affects your tax reductions
+                          Number of dependants affects your tax reductions (only applicable for residents with declaration lodged)
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -399,13 +384,13 @@ const PNGIncomeTaxCalculator = () => {
                                 <HelpCircle className="h-4 w-4 ml-2 text-muted-foreground inline-block" />
                               </TooltipTrigger>
                               <TooltipContent className="max-w-80">
-                                <p>If enabled, 40% of your salary will be deducted as salary sacrifice.</p>
+                                <p>If enabled, 40% of your salary will be deducted as salary sacrifice before tax is calculated.</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
                         </FormLabel>
                         <FormDescription>
-                          Apply salary sacrifice to your calculation?
+                          Apply 40% salary sacrifice to your calculation?
                         </FormDescription>
                       </div>
                       <FormControl>
@@ -438,7 +423,7 @@ const PNGIncomeTaxCalculator = () => {
                                 <HelpCircle className="h-4 w-4 ml-2 text-muted-foreground inline-block" />
                               </TooltipTrigger>
                               <TooltipContent className="max-w-80">
-                                <p>If enabled, 6% of your salary will be contributed to Nasfund.</p>
+                                <p>If enabled, 6% of your salary will be contributed to Nasfund (deducted after tax calculation).</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -477,7 +462,7 @@ const PNGIncomeTaxCalculator = () => {
                                 <HelpCircle className="h-4 w-4 ml-2 text-muted-foreground inline-block" />
                               </TooltipTrigger>
                               <TooltipContent className="max-w-80">
-                                <p>Add custom deductions such as loans, health insurance, or other regular payments.</p>
+                                <p>Add custom deductions such as loans, health insurance, or other regular payments (deducted before tax calculation).</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -614,8 +599,8 @@ const PNGIncomeTaxCalculator = () => {
                       </p>
                     </div>
                     <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
-                      <p className="text-sm font-medium text-muted-foreground mb-1">Net Income (After Tax)</p>
-                      <p className="text-2xl font-bold text-[#009c3f]">{formatPNGCurrency(calculationResult.netIncome[form.watch('isFortnightly') ? 'fortnightly' : 'annual'])}</p>
+                      <p className="text-sm font-medium text-muted-foreground mb-1">Taxable Income</p>
+                      <p className="text-2xl font-bold">{formatPNGCurrency(calculationResult.taxableIncome[form.watch('isFortnightly') ? 'fortnightly' : 'annual'])}</p>
                       <p className="text-xs text-muted-foreground">
                         {form.watch('isFortnightly') ? 'Per Fortnight' : 'Annual'}
                       </p>
@@ -638,14 +623,20 @@ const PNGIncomeTaxCalculator = () => {
                         <span>Effective Tax Rate:</span>
                         <span className="font-semibold">{(calculationResult.effectiveTaxRate * 100).toFixed(2)}%</span>
                       </p>
+                      {calculationResult.taxBreakdown.dependantReduction > 0 && (
+                        <p className="text-sm flex justify-between text-[#009c3f] mt-1">
+                          <span>Dependant Reduction:</span>
+                          <span className="font-semibold">{formatPNGCurrency(calculationResult.taxBreakdown.dependantReduction)} (fortnightly)</span>
+                        </p>
+                      )}
                     </div>
                   </div>
 
-                  {/* Tax Bracket information - Added as requested */}
+                  {/* Tax Bracket information */}
                   <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
                     <h3 className="font-medium mb-2">Tax Bracket</h3>
                     <p className="text-sm">
-                      {getTaxBracketDescription(calculationResult.grossIncome.fortnightly)}
+                      {calculationResult.taxBreakdown.bracket}
                     </p>
                   </div>
 
@@ -704,35 +695,52 @@ const PNGIncomeTaxCalculator = () => {
                   </div>
                 </div>
 
-                <div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setShowDetails(!showDetails)}
-                    className="w-full text-center justify-center"
-                  >
-                    {showDetails ? (
-                      <>
-                        <ArrowUp className="h-4 w-4 mr-2" />
-                        Hide Calculation Details
-                      </>
-                    ) : (
-                      <>
-                        <ArrowDown className="h-4 w-4 mr-2" />
-                        Show Calculation Details
-                      </>
-                    )}
-                  </Button>
-
+                {/* Tax Calculation Details - always visible */}
+                <div className="mt-4 space-y-3 bg-slate-50 dark:bg-slate-800 p-4 rounded-lg text-sm">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">Tax Calculation Details</h3>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setShowDetails(!showDetails)}
+                      className="h-8 px-2"
+                    >
+                      {showDetails ? (
+                        <ArrowUp className="h-4 w-4" />
+                      ) : (
+                        <ArrowDown className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  
                   {showDetails && (
-                    <div className="mt-4 space-y-3 bg-slate-50 dark:bg-slate-800 p-4 rounded-lg text-sm">
-                      <h3 className="font-medium">Tax Calculation Details</h3>
+                    <>
                       <Separator />
                       
                       <div className="space-y-2">
                         <div className="flex justify-between">
+                          <span>Tax Bracket:</span>
+                          <span>{calculationResult.taxBreakdown.bracket}</span>
+                        </div>
+                        
+                        <div className="flex justify-between">
                           <span>Base Tax:</span>
                           <span>{formatPNGCurrency(calculationResult.taxBreakdown.baseTax)}</span>
+                        </div>
+                        
+                        <div className="flex justify-between">
+                          <span>Excess Amount:</span>
+                          <span>{formatPNGCurrency(calculationResult.taxBreakdown.excessAmount)}</span>
+                        </div>
+                        
+                        <div className="flex justify-between">
+                          <span>Excess Tax:</span>
+                          <span>{formatPNGCurrency(calculationResult.taxBreakdown.excessTax)}</span>
+                        </div>
+                        
+                        <div className="flex justify-between">
+                          <span>Total Before Reduction:</span>
+                          <span>{formatPNGCurrency(calculationResult.taxBreakdown.totalBeforeReduction)}</span>
                         </div>
                         
                         {calculationResult.taxBreakdown.dependantReduction > 0 && (
@@ -763,8 +771,19 @@ const PNGIncomeTaxCalculator = () => {
                           </div>
                         )}
                       </div>
-                    </div>
+                    </>
                   )}
+                </div>
+
+                <div className="flex flex-col gap-2 w-full">
+                  <Button variant="outline" className="w-full" onClick={generatePDF}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download PDF Report
+                  </Button>
+                  <Button variant="outline" className="w-full" onClick={printResults}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print Results
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -774,20 +793,6 @@ const PNGIncomeTaxCalculator = () => {
               </div>
             )}
           </CardContent>
-          <CardFooter className="flex-col gap-4">
-            {calculationResult && (
-              <div className="flex flex-col gap-2 w-full">
-                <Button variant="outline" className="w-full" onClick={generatePDF}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Download PDF Report
-                </Button>
-                <Button variant="outline" className="w-full" onClick={printResults}>
-                  <Printer className="mr-2 h-4 w-4" />
-                  Print Results
-                </Button>
-              </div>
-            )}
-          </CardFooter>
         </Card>
       </div>
 
@@ -834,7 +839,7 @@ const PNGIncomeTaxCalculator = () => {
         </CardContent>
       </Card>
 
-      {/* Footer with contact information - Added as requested */}
+      {/* Footer with contact information */}
       <div className="mt-8 border-t pt-8">
         <div className="grid gap-8 md:grid-cols-2">
           <div>
