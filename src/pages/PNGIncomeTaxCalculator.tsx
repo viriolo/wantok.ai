@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { PNGTaxInput, PNGTaxResult, calculatePNGIncomeTax, formatPNGCurrency } from '@/services/PNGTaxCalculationService';
 import { Button } from '@/components/ui/button';
@@ -14,17 +13,16 @@ import {
   HelpCircle, Printer, Download, 
   InfoIcon, AlertTriangle, 
   ArrowDown, ArrowUp,
-  Flag 
+  Flag, Plus, Trash2
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { z } from 'zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
-// Form schema with validation
 const formSchema = z.object({
   income: z.coerce.number()
     .positive('Income must be a positive number')
@@ -33,6 +31,15 @@ const formSchema = z.object({
   isResident: z.boolean().default(true),
   hasDeclarationLodged: z.boolean().default(true),
   dependants: z.enum(['0', '1', '2', '3']).default('0'),
+  hasSalarySacrifice: z.boolean().default(false),
+  hasNasfund: z.boolean().default(false),
+  otherDeductions: z.array(
+    z.object({
+      name: z.string().min(1, "Deduction name is required"),
+      amount: z.coerce.number().min(0, "Amount must be a positive number")
+    })
+  ).default([]),
+  hasOtherDeductions: z.boolean().default(false)
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -41,7 +48,6 @@ const PNGIncomeTaxCalculator = () => {
   const [calculationResult, setCalculationResult] = useState<PNGTaxResult | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Initialize form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -50,8 +56,29 @@ const PNGIncomeTaxCalculator = () => {
       isResident: true,
       hasDeclarationLodged: true,
       dependants: '0',
+      hasSalarySacrifice: false,
+      hasNasfund: false,
+      otherDeductions: [],
+      hasOtherDeductions: false
     },
   });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "otherDeductions",
+  });
+
+  const hasOtherDeductions = form.watch('hasOtherDeductions');
+  
+  React.useEffect(() => {
+    if (hasOtherDeductions && fields.length === 0) {
+      append({ name: '', amount: 0 });
+    } else if (!hasOtherDeductions && fields.length > 0) {
+      for (let i = fields.length - 1; i >= 0; i--) {
+        remove(i);
+      }
+    }
+  }, [hasOtherDeductions, fields.length, append, remove]);
 
   const handleCalculate = (data: FormValues) => {
     try {
@@ -61,6 +88,9 @@ const PNGIncomeTaxCalculator = () => {
         isResident: data.isResident,
         hasDeclarationLodged: data.hasDeclarationLodged,
         dependants: parseInt(data.dependants) as 0 | 1 | 2 | 3,
+        hasSalarySacrifice: data.hasSalarySacrifice,
+        hasNasfund: data.hasNasfund,
+        otherDeductions: data.hasOtherDeductions ? data.otherDeductions : []
       };
 
       const result = calculatePNGIncomeTax(taxInput);
@@ -69,7 +99,7 @@ const PNGIncomeTaxCalculator = () => {
 
       toast({
         title: "Tax Calculation Complete",
-        description: "Your PNG tax calculation has been processed.",
+        description: "Your tax calculation has been processed.",
       });
     } catch (error) {
       toast({
@@ -91,11 +121,14 @@ const PNGIncomeTaxCalculator = () => {
       title: "PDF Generation",
       description: "Downloading your tax calculation as PDF...",
     });
-    // In a real app, this would generate and download a PDF
   };
 
   const printResults = () => {
     window.print();
+  };
+
+  const addDeduction = () => {
+    append({ name: '', amount: 0 });
   };
 
   return (
@@ -107,7 +140,7 @@ const PNGIncomeTaxCalculator = () => {
             <Flag className="h-6 w-6 text-[#ce1126]" />
           </div>
           <p className="text-muted-foreground mt-2">
-            Calculate your PNG salary and wages tax based on the Income Tax Act 2023. 
+            Calculate your salary and wages tax based on the Income Tax Act 2023. 
             Simply enter your income and details below to get an estimate.
           </p>
         </div>
@@ -115,7 +148,6 @@ const PNGIncomeTaxCalculator = () => {
       </div>
 
       <div className="grid gap-8 md:grid-cols-12">
-        {/* Input Form Card */}
         <Card className="md:col-span-7">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -128,7 +160,6 @@ const PNGIncomeTaxCalculator = () => {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleCalculate)} className="space-y-6">
-                {/* Income Period Selection */}
                 <FormField
                   control={form.control}
                   name="isFortnightly"
@@ -159,7 +190,6 @@ const PNGIncomeTaxCalculator = () => {
                   )}
                 />
 
-                {/* Income Input */}
                 <FormField
                   control={form.control}
                   name="income"
@@ -194,7 +224,6 @@ const PNGIncomeTaxCalculator = () => {
                   )}
                 />
 
-                {/* Taxpayer Status */}
                 <FormField
                   control={form.control}
                   name="isResident"
@@ -215,7 +244,7 @@ const PNGIncomeTaxCalculator = () => {
                           </TooltipProvider>
                         </FormLabel>
                         <FormDescription>
-                          Are you a PNG resident for tax purposes?
+                          Are you a resident for tax purposes?
                         </FormDescription>
                       </div>
                       <FormControl>
@@ -228,7 +257,6 @@ const PNGIncomeTaxCalculator = () => {
                   )}
                 />
 
-                {/* Declaration Status */}
                 <FormField
                   control={form.control}
                   name="hasDeclarationLodged"
@@ -262,7 +290,6 @@ const PNGIncomeTaxCalculator = () => {
                   )}
                 />
 
-                {/* Dependants - only shown if resident and declaration lodged */}
                 {form.watch('isResident') && form.watch('hasDeclarationLodged') && (
                   <FormField
                     control={form.control}
@@ -307,6 +334,180 @@ const PNGIncomeTaxCalculator = () => {
                   />
                 )}
 
+                <FormField
+                  control={form.control}
+                  name="hasSalarySacrifice"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          Salary Sacrifice (60%)
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-4 w-4 ml-2 text-muted-foreground inline-block" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-80">
+                                <p>If enabled, 60% of your salary will be deducted as salary sacrifice.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </FormLabel>
+                        <FormDescription>
+                          Apply salary sacrifice to your calculation?
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="hasNasfund"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          Nasfund Contribution (6%)
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-4 w-4 ml-2 text-muted-foreground inline-block" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-80">
+                                <p>If enabled, 6% of your salary will be contributed to Nasfund.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </FormLabel>
+                        <FormDescription>
+                          Apply Nasfund contribution to your calculation?
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="hasOtherDeductions"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          Other Deductions
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-4 w-4 ml-2 text-muted-foreground inline-block" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-80">
+                                <p>Add custom deductions such as loans, health insurance, or other regular payments.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </FormLabel>
+                        <FormDescription>
+                          Do you have additional deductions to include?
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                {form.watch('hasOtherDeductions') && (
+                  <div className="space-y-4 border rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-base font-medium">Deduction Details</h3>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={addDeduction}
+                        className="flex items-center gap-1"
+                      >
+                        <Plus className="h-3 w-3" /> Add
+                      </Button>
+                    </div>
+                    
+                    {fields.map((field, index) => (
+                      <div key={field.id} className="grid grid-cols-12 gap-3 items-end">
+                        <div className="col-span-7">
+                          <FormField
+                            control={form.control}
+                            name={`otherDeductions.${index}.name`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-sm">Deduction Name</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="e.g., Loan payment"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <div className="col-span-4">
+                          <FormField
+                            control={form.control}
+                            name={`otherDeductions.${index}.amount`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-sm">Amount</FormLabel>
+                                <FormControl>
+                                  <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">K</span>
+                                    <Input 
+                                      type="number"
+                                      placeholder="0.00" 
+                                      className="pl-8"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    />
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <div className="col-span-1">
+                          <Button 
+                            type="button"
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => remove(index)}
+                            className="p-0 h-9 w-9 flex items-center justify-center text-destructive hover:text-destructive/80"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <div className="flex gap-4 pt-2">
                   <Button type="submit" className="flex-1">
                     <Calculator className="mr-2 h-4 w-4" />
@@ -321,21 +522,19 @@ const PNGIncomeTaxCalculator = () => {
           </CardContent>
         </Card>
 
-        {/* Results Card */}
         <Card className="md:col-span-5">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Tax Results</span>
-              <Badge className="ml-2 bg-[#009c3f] text-white">PNG 2023</Badge>
+              <Badge className="ml-2 bg-[#009c3f] text-white">2023</Badge>
             </CardTitle>
             <CardDescription>
-              Your calculated tax liability
+              Your calculated tax liability and net pay
             </CardDescription>
           </CardHeader>
           <CardContent>
             {calculationResult ? (
               <div className="space-y-6">
-                {/* Summary */}
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
@@ -346,7 +545,7 @@ const PNGIncomeTaxCalculator = () => {
                       </p>
                     </div>
                     <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
-                      <p className="text-sm font-medium text-muted-foreground mb-1">Net Income</p>
+                      <p className="text-sm font-medium text-muted-foreground mb-1">Net Income (After Tax)</p>
                       <p className="text-2xl font-bold text-[#009c3f]">{formatPNGCurrency(calculationResult.netIncome[form.watch('isFortnightly') ? 'fortnightly' : 'annual'])}</p>
                       <p className="text-xs text-muted-foreground">
                         {form.watch('isFortnightly') ? 'Per Fortnight' : 'Annual'}
@@ -372,9 +571,62 @@ const PNGIncomeTaxCalculator = () => {
                       </p>
                     </div>
                   </div>
+
+                  <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
+                    <h3 className="font-medium mb-3">Deductions</h3>
+                    <div className="space-y-2">
+                      {calculationResult.deductions.salarySacrifice > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span>Salary Sacrifice (60%):</span>
+                          <span className="font-medium">- {formatPNGCurrency(calculationResult.deductions.salarySacrifice)}</span>
+                        </div>
+                      )}
+                      
+                      {calculationResult.deductions.nasfund > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span>Nasfund Contribution (6%):</span>
+                          <span className="font-medium">- {formatPNGCurrency(calculationResult.deductions.nasfund)}</span>
+                        </div>
+                      )}
+                      
+                      {calculationResult.deductions.other.length > 0 && (
+                        <>
+                          <p className="text-sm font-medium mt-2 mb-1">Other Deductions:</p>
+                          {calculationResult.deductions.other.map((deduction, idx) => (
+                            <div key={idx} className="flex justify-between text-sm pl-4">
+                              <span>{deduction.name || "Deduction"}:</span>
+                              <span className="font-medium">- {formatPNGCurrency(deduction.amount)}</span>
+                            </div>
+                          ))}
+                        </>
+                      )}
+                      
+                      <div className="pt-2 mt-1 border-t flex justify-between font-medium">
+                        <span>Total Deductions:</span>
+                        <span>- {formatPNGCurrency(calculationResult.deductions.total)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#009c3f]/10 p-4 rounded-lg">
+                    <h3 className="font-medium mb-2">Final Net Pay</h3>
+                    <div className="flex flex-col">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-lg">{form.watch('isFortnightly') ? 'Fortnightly:' : 'Annual:'}</span>
+                        <span className="font-bold text-xl text-[#009c3f]">
+                          {formatPNGCurrency(calculationResult.finalNetPay[form.watch('isFortnightly') ? 'fortnightly' : 'annual'])}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {form.watch('isFortnightly') 
+                          ? `Annual equivalent: ${formatPNGCurrency(calculationResult.finalNetPay.annual)}`
+                          : `Fortnightly: ${formatPNGCurrency(calculationResult.finalNetPay.fortnightly)}`
+                        }
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Detailed breakdown toggle */}
                 <div>
                   <Button 
                     variant="outline" 
@@ -429,7 +681,6 @@ const PNGIncomeTaxCalculator = () => {
                   )}
                 </div>
 
-                {/* Info box */}
                 <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 p-4 rounded-md">
                   <div className="flex items-start gap-2">
                     <InfoIcon size={18} className="text-amber-500 mt-0.5 flex-shrink-0" />
@@ -466,13 +717,12 @@ const PNGIncomeTaxCalculator = () => {
           </CardFooter>
         </Card>
       </div>
-      
-      {/* Tax Info Section */}
+
       <Card className="mt-8">
         <CardHeader>
-          <CardTitle>Papua New Guinea Tax Information</CardTitle>
+          <CardTitle>Tax Information</CardTitle>
           <CardDescription>
-            Key tax information for individuals in Papua New Guinea
+            Key tax information for individuals
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -490,30 +740,29 @@ const PNGIncomeTaxCalculator = () => {
             <div className="space-y-2">
               <h3 className="font-semibold flex items-center">
                 <InfoIcon className="h-4 w-4 mr-2 text-primary" />
-                Non-Resident Tax Rules
+                Salary Sacrifice
               </h3>
               <p className="text-sm text-muted-foreground">
-                Non-residents pay a minimum tax rate of 22%, which increases to 42% for high incomes. 
-                No dependant deductions are available for non-resident taxpayers.
+                Salary sacrifice allows you to allocate 60% of your income toward benefits like housing, 
+                vehicle allowances, or retirement contributions before tax is calculated.
               </p>
             </div>
             <div className="space-y-2">
               <h3 className="font-semibold flex items-center">
                 <InfoIcon className="h-4 w-4 mr-2 text-primary" />
-                Dependant Reductions
+                Nasfund Contributions
               </h3>
               <p className="text-sm text-muted-foreground">
-                For residents with lodged declarations: 1 dependant: 10% tax reduction (max K17.31), 
-                2 dependants: 15% (max K28.85), 3+ dependants: 35% (max K40.38).
+                The standard Nasfund contribution is 6% of your salary. This is a compulsory superannuation 
+                contribution that is deducted from your net income after tax.
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Contact Information */}
       <div className="mt-8 text-sm text-center text-muted-foreground">
-        <p className="mb-1">For official tax advice, contact the Papua New Guinea Internal Revenue Commission</p>
+        <p className="mb-1">For official tax advice, contact the Internal Revenue Commission</p>
         <p>Website: <a href="https://irc.gov.pg" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">https://irc.gov.pg</a></p>
       </div>
     </div>

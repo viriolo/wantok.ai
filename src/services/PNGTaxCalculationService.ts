@@ -10,6 +10,9 @@ export interface PNGTaxInput {
   isResident: boolean;
   hasDeclarationLodged: boolean;
   dependants: 0 | 1 | 2 | 3;
+  hasSalarySacrifice: boolean;
+  hasNasfund: boolean;
+  otherDeductions: {name: string; amount: number}[];
 }
 
 export interface PNGTaxResult {
@@ -30,6 +33,16 @@ export interface PNGTaxResult {
     baseTax: number;
     dependantReduction: number;
     finalTax: number;
+  };
+  deductions: {
+    salarySacrifice: number;
+    nasfund: number;
+    other: {name: string; amount: number}[];
+    total: number;
+  };
+  finalNetPay: {
+    fortnightly: number;
+    annual: number;
   };
 }
 
@@ -154,9 +167,28 @@ export const calculatePNGIncomeTax = (input: PNGTaxInput): PNGTaxResult => {
   // Calculate annual tax
   const annualTax = fortnightlyTax * 26;
   
-  // Calculate net income
+  // Calculate net income (after tax)
   const fortnightlyNetIncome = fortnightlyIncome - fortnightlyTax;
   const annualNetIncome = annualIncome - annualTax;
+  
+  // Calculate deductions
+  
+  // 1. Salary Sacrifice (60% if enabled)
+  const salarySacrificeAmount = input.hasSalarySacrifice ? annualIncome * 0.6 : 0;
+  
+  // 2. Nasfund contribution (6% if enabled)
+  const nasfundAmount = input.hasNasfund ? annualIncome * 0.06 : 0;
+  
+  // 3. Other deductions total
+  const otherDeductionsTotal = input.otherDeductions.reduce((total, deduction) => 
+    total + deduction.amount, 0);
+  
+  // Total deductions (annual)
+  const totalDeductions = salarySacrificeAmount + nasfundAmount + otherDeductionsTotal;
+  
+  // Final net pay after all deductions
+  const annualFinalNetPay = annualNetIncome - totalDeductions;
+  const fortnightlyFinalNetPay = annualFinalNetPay / 26;
   
   // Calculate effective tax rate
   const effectiveTaxRate = annualIncome > 0 ? annualTax / annualIncome : 0;
@@ -175,7 +207,17 @@ export const calculatePNGIncomeTax = (input: PNGTaxInput): PNGTaxResult => {
       annual: annualNetIncome
     },
     effectiveTaxRate,
-    taxBreakdown
+    taxBreakdown,
+    deductions: {
+      salarySacrifice: salarySacrificeAmount,
+      nasfund: nasfundAmount,
+      other: input.otherDeductions,
+      total: totalDeductions
+    },
+    finalNetPay: {
+      fortnightly: fortnightlyFinalNetPay,
+      annual: annualFinalNetPay
+    }
   };
 };
 
