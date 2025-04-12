@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { PNGTaxInput, PNGTaxResult, calculatePNGIncomeTax, formatPNGCurrency } from '@/services/PNGTaxCalculationService';
 import { Button } from '@/components/ui/button';
@@ -82,6 +83,7 @@ const PNGIncomeTaxCalculator = () => {
 
   const handleCalculate = (data: FormValues) => {
     try {
+      // Fix here: Ensure we're passing properly typed data to calculatePNGIncomeTax
       const taxInput: PNGTaxInput = {
         income: data.income,
         isFortnightly: data.isFortnightly,
@@ -90,7 +92,12 @@ const PNGIncomeTaxCalculator = () => {
         dependants: parseInt(data.dependants) as 0 | 1 | 2 | 3,
         hasSalarySacrifice: data.hasSalarySacrifice,
         hasNasfund: data.hasNasfund,
-        otherDeductions: data.hasOtherDeductions ? data.otherDeductions : []
+        otherDeductions: data.hasOtherDeductions 
+          ? data.otherDeductions.map(d => ({ 
+              name: d.name || "Unnamed Deduction", // Provide default name
+              amount: d.amount || 0 // Provide default amount
+            })) 
+          : []
       };
 
       const result = calculatePNGIncomeTax(taxInput);
