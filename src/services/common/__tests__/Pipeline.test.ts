@@ -51,8 +51,8 @@ describe('Pipeline', () => {
     const pipeline = new Pipeline<number>();
     
     const steps = [
-      createStep(n => n + 5),
-      createStep(n => n - 2)
+      createStep<number>(n => n + 5),
+      createStep<number>(n => n - 2)
     ];
     
     pipeline.addSteps(steps);
