@@ -6,21 +6,23 @@ import { buttonVariants } from "@/components/ui/button";
 import Hero from "@/components/Hero";
 import Features from "@/components/Features";
 import Footer from "@/components/Footer";
+import ServiceCards from "@/components/ServiceCards";
 
 const Index = () => {
   const heroProps = {
-    title: "Papua New Guinea Tax System",
-    subtitle: "Simplify your tax management with our comprehensive tax calculation and compliance system",
+    title: "viinno.com",
+    subtitle: "Professional services simplified for Papua New Guinea",
     ctaText: "Get Started",
     ctaLink: "/signup",
-    secondaryCtaText: "Try Tax Calculator",
-    secondaryCtaLink: "/tax-calculator",
+    secondaryCtaText: "Explore Services",
+    secondaryCtaLink: "#services",
   };
 
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
         <Hero {...heroProps} />
+        <ServiceCards />
         <Features />
       </main>
       <Footer />

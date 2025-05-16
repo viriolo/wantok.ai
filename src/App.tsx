@@ -11,6 +11,7 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import TaxCalculator from "./pages/TaxCalculator";
 import PNGIncomeTaxCalculator from "./pages/PNGIncomeTaxCalculator";
+import LegalServices from "./pages/LegalServices";
 import Reports from "./pages/Reports";
 import Profile from "./pages/Profile";
 import Help from "./pages/Help";
@@ -39,6 +40,7 @@ const App = () => (
           <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
           <Route path="/tax-calculator" element={<Layout><TaxCalculator /></Layout>} />
           <Route path="/income-tax-calculator" element={<Layout><PNGIncomeTaxCalculator /></Layout>} />
+          <Route path="/legal-services" element={<Layout><LegalServices /></Layout>} />
           <Route path="/reports" element={<Layout><Reports /></Layout>} />
           <Route path="/profile" element={<Layout><Profile /></Layout>} />
           <Route path="/help" element={<Layout><Help /></Layout>} />
