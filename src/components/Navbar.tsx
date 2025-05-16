@@ -48,7 +48,7 @@ const Navbar = () => {
       <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
         <div className="flex gap-6 md:gap-10">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="inline-block font-bold text-xl text-primary">viinno.com</span>
+            <span className="inline-block font-bold text-xl text-primary">wantok.ai</span>
           </Link>
           
           {/* Desktop Navigation */}
@@ -129,7 +129,7 @@ const Navbar = () => {
               </SheetTrigger>
               <SheetContent side="right" className="w-[270px] sm:w-[350px]">
                 <Link to="/" className="flex items-center space-x-2 mb-6">
-                  <span className="inline-block font-bold text-xl">viinno.com</span>
+                  <span className="inline-block font-bold text-xl">wantok.ai</span>
                 </Link>
                 <nav className="flex flex-col gap-5 pt-2">
                   {/* Main mobile items */}

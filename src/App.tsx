@@ -34,7 +34,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => (
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="light" storageKey="viinno-theme">
+    <ThemeProvider defaultTheme="light" storageKey="wantok-ai-theme">
       <TooltipProvider>
         <Toaster />
         <Sonner />

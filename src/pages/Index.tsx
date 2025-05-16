@@ -13,7 +13,7 @@ import { CheckCircle, Star, Users } from "lucide-react";
 
 const Index = () => {
   const heroProps = {
-    title: "viinno.com",
+    title: "wantok.ai",
     subtitle: "Professional services simplified for Papua New Guinea",
     ctaText: "Get Started",
     ctaLink: "/signup",
