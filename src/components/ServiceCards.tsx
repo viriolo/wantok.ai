@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { BlurCard } from '@/components/ui/blur-card';
-import { FileText, MessageSquare } from 'lucide-react';
+import { FileText, MessageSquare, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useScrollAnimation } from '@/lib/animations';
 
@@ -17,21 +17,21 @@ const ServiceCards = () => {
     {
       title: 'PNG Tax Services',
       description: 'Simplify your tax management with our comprehensive tax calculation and compliance system for Papua New Guinea.',
-      icon: <FileText className="h-8 w-8 text-blue-500" />,
-      link: '/tax-calculator',
+      icon: <FileText className="h-8 w-8 text-primary" />,
+      link: '/income-tax-calculator',
       buttonText: 'Calculate Taxes'
     },
     {
       title: 'Legal Advisory Services',
       description: 'Get expert legal advice and guidance by chatting with our specialists or uploading your documents for review.',
-      icon: <MessageSquare className="h-8 w-8 text-blue-500" />,
+      icon: <MessageSquare className="h-8 w-8 text-primary" />,
       link: '/legal-services',
       buttonText: 'Seek Legal Advice'
     }
   ];
 
   return (
-    <section id="services" className="py-16 bg-secondary/10">
+    <section id="services" className="py-16 bg-secondary/10 dark:bg-secondary/5">
       <div className="container max-w-6xl px-4 mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Our Services</h2>
@@ -47,18 +47,23 @@ const ServiceCards = () => {
           {services.map((service, index) => (
             <BlurCard 
               key={index} 
-              className="p-6 flex flex-col items-center text-center"
+              className="p-6 flex flex-col h-full"
               variant="bordered"
               hoverable
             >
-              <div className="mb-4 p-3 rounded-full bg-secondary/50">
+              <div className="mb-4 p-3 inline-flex rounded-full bg-secondary/50">
                 {service.icon}
               </div>
               <h3 className="text-xl font-semibold mb-3">{service.title}</h3>
               <p className="text-muted-foreground mb-6">{service.description}</p>
-              <Link to={service.link} className="mt-auto">
-                <Button>{service.buttonText}</Button>
-              </Link>
+              <div className="mt-auto">
+                <Link to={service.link} className="w-full">
+                  <Button className="w-full group">
+                    {service.buttonText}
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Button>
+                </Link>
+              </div>
             </BlurCard>
           ))}
         </div>
