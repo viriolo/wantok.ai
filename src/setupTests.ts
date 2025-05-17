@@ -2,7 +2,9 @@
 // This file is automatically loaded by Jest to set up the test environment
 // It runs before each test file is executed
 
-// This ensures TypeScript recognizes the Jest globals
+// Add Jest globals to the global scope
 import '@types/jest';
 
 // You can add more setup code here if needed
+// For example, custom matchers, mocking libraries, etc.
+
