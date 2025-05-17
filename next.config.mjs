@@ -10,7 +10,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Add any other Next.js config options here
 }
 
 export default nextConfig
